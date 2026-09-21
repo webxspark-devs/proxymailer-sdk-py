@@ -19,7 +19,7 @@ KEY = "pm_live_abcdefghijklmnopqrstuvwxyz0123456789ab"
 
 @respx.mock
 def test_send_success_maps_result() -> None:
-    route = respx.post("https://mail.example.com/api/v1/send").mock(
+    route = respx.post("https://proxymailer.wxp.app/api/v1/send").mock(
         return_value=httpx.Response(
             202,
             json={
@@ -30,7 +30,7 @@ def test_send_success_maps_result() -> None:
             },
         )
     )
-    client = Client(KEY, base_url="https://mail.example.com", max_retries=0)
+    client = Client(KEY, base_url="https://proxymailer.wxp.app", max_retries=0)
     result = client.send(
         {
             "from": "noreply@acme.test",
@@ -52,10 +52,10 @@ def test_send_success_maps_result() -> None:
 
 @respx.mock
 def test_auth_error_throws() -> None:
-    respx.post("https://mail.example.com/api/v1/send").mock(
+    respx.post("https://proxymailer.wxp.app/api/v1/send").mock(
         return_value=httpx.Response(401, json={"message": "Valid application API key required."})
     )
-    client = Client(KEY, base_url="https://mail.example.com", max_retries=0)
+    client = Client(KEY, base_url="https://proxymailer.wxp.app", max_retries=0)
     with pytest.raises(AuthenticationError):
         client.send({"from": "a@b.c", "to": ["c@d.e"]})
     client.close()
@@ -63,7 +63,7 @@ def test_auth_error_throws() -> None:
 
 @respx.mock
 def test_validation_error_exposes_fields() -> None:
-    respx.post("https://mail.example.com/api/v1/send").mock(
+    respx.post("https://proxymailer.wxp.app/api/v1/send").mock(
         return_value=httpx.Response(
             422,
             json={
@@ -72,7 +72,7 @@ def test_validation_error_exposes_fields() -> None:
             },
         )
     )
-    client = Client(KEY, base_url="https://mail.example.com", max_retries=0)
+    client = Client(KEY, base_url="https://proxymailer.wxp.app", max_retries=0)
     with pytest.raises(ValidationError) as exc:
         client.send({"from": "bad@acme.test", "to": ["user@example.com"]})
     assert "from" in exc.value.errors
@@ -98,7 +98,7 @@ def test_attachment_helpers(tmp_path: Path) -> None:
 
 @respx.mock
 def test_sync_failure_502_returns_result_without_retry() -> None:
-    route = respx.post("https://mail.example.com/api/v1/send").mock(
+    route = respx.post("https://proxymailer.wxp.app/api/v1/send").mock(
         return_value=httpx.Response(
             502,
             json={
@@ -109,7 +109,7 @@ def test_sync_failure_502_returns_result_without_retry() -> None:
             },
         )
     )
-    client = Client(KEY, base_url="https://mail.example.com", max_retries=3)
+    client = Client(KEY, base_url="https://proxymailer.wxp.app", max_retries=3)
     result = client.send({"from": "a@b.c", "to": "c@d.e", "sync": True})
     assert result.is_failed()
     assert result.http_status == 502
@@ -119,14 +119,14 @@ def test_sync_failure_502_returns_result_without_retry() -> None:
 
 @respx.mock
 def test_rate_limit_retries_then_raises() -> None:
-    route = respx.post("https://mail.example.com/api/v1/send").mock(
+    route = respx.post("https://proxymailer.wxp.app/api/v1/send").mock(
         return_value=httpx.Response(
             429,
             json={"message": "Too many requests"},
             headers={"Retry-After": "0"},
         )
     )
-    client = Client(KEY, base_url="https://mail.example.com", max_retries=1)
+    client = Client(KEY, base_url="https://proxymailer.wxp.app", max_retries=1)
     with pytest.raises(RateLimitError) as exc:
         client.send({"from": "a@b.c", "to": ["c@d.e"]})
     assert exc.value.retry_after_seconds == 0
@@ -136,7 +136,7 @@ def test_rate_limit_retries_then_raises() -> None:
 
 @respx.mock
 def test_context_manager_send() -> None:
-    respx.post("https://mail.example.com/api/v1/send").mock(
+    respx.post("https://proxymailer.wxp.app/api/v1/send").mock(
         return_value=httpx.Response(
             202,
             json={
@@ -147,7 +147,7 @@ def test_context_manager_send() -> None:
             },
         )
     )
-    with Client(KEY, base_url="https://mail.example.com", max_retries=0) as client:
+    with Client(KEY, base_url="https://proxymailer.wxp.app", max_retries=0) as client:
         result = client.send({"from": "a@b.c", "to": "c@d.e"})
         assert result.is_sent()
         assert result.provider_message_id == "prov-1"
@@ -172,7 +172,7 @@ def test_approved_sender_helpers_unwrap_data() -> None:
             },
         )
     )
-    create_route = respx.post("https://mail.example.com/api/v1/approved-senders").mock(
+    create_route = respx.post("https://proxymailer.wxp.app/api/v1/approved-senders").mock(
         return_value=httpx.Response(
             201,
             json={
@@ -185,7 +185,7 @@ def test_approved_sender_helpers_unwrap_data() -> None:
             },
         )
     )
-    update_route = respx.patch("https://mail.example.com/api/v1/approved-senders/9").mock(
+    update_route = respx.patch("https://proxymailer.wxp.app/api/v1/approved-senders/9").mock(
         return_value=httpx.Response(
             200,
             json={
@@ -198,14 +198,14 @@ def test_approved_sender_helpers_unwrap_data() -> None:
             },
         )
     )
-    delete_route = respx.delete("https://mail.example.com/api/v1/approved-senders/9").mock(
+    delete_route = respx.delete("https://proxymailer.wxp.app/api/v1/approved-senders/9").mock(
         return_value=httpx.Response(
             200,
             json={"data": {"id": 9, "email": "b@acme.test", "deleted": True}},
         )
     )
 
-    client = Client(KEY, base_url="https://mail.example.com", max_retries=0)
+    client = Client(KEY, base_url="https://proxymailer.wxp.app", max_retries=0)
     listed = client.list_approved_senders()
     assert "data" in listed
     assert list_route.called
