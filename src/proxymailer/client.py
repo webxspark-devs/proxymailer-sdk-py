@@ -32,7 +32,7 @@ class Client:
         self,
         api_key: str,
         *,
-        base_url: str = "https://mail.example.com",
+        base_url: str = "https://proxymailer.wxp.app",
         timeout: float = 30.0,
         max_retries: int = 3,
         transport: httpx.BaseTransport | None = None,
